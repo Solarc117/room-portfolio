@@ -1,3 +1,11 @@
+/* CSS methodology: selector {
+  WHERE: where is this selectee located?
+  --
+  WHAT: what does it look like?
+  --
+  WITHIN: what do its contents look like?
+} */
+
 * {
   margin: 0;
   padding: 0;

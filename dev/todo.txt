@@ -1,0 +1,12 @@
+✅❌📝⚠️🎯
+
+PROJECT DEADLINE: May 31st, 23:00
+
+Major Tasks:
+
+1. Render out blender scene (add lighting, if not imported from blender)
+  - 
+
+2. Ensure no discrepancies between blender three.js scenes - if any, remodel
+
+3. Deploy to Netlify
