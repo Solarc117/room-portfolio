@@ -4,8 +4,17 @@ PROJECT DEADLINE: May 31st, 23:00
 
 Major Tasks:
 
+0. Organize file structure:
+  ✅ list out the different files needed:
+    - experience.ts (singleton file - global access point)
+    - scene.ts (scene instantiator)
+    - camera.ts 
+    - sizes.ts
+    - room.ts (file that imports blender file & adds it)
+  🎯 add
+
+
 1. Render out blender scene (add lighting, if not imported from blender)
-  - 
 
 2. Ensure no discrepancies between blender three.js scenes - if any, remodel
 
