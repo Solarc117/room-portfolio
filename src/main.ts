@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import WebGL from 'three/addons/capabilities/WebGL.js'
 import './style.css'
+import { Object3D } from 'three'
 const queryId = document.getElementById.bind(document)
 
 ;(async () => {
@@ -13,6 +14,9 @@ const queryId = document.getElementById.bind(document)
   const scene = new THREE.Scene(),
     camera = new THREE.PerspectiveCamera(75, width / height),
     renderer = new THREE.WebGLRenderer()
+
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
   camera.rotateY(Math.PI / 2)
   camera.rotateX(-0.5)
@@ -49,9 +53,34 @@ const queryId = document.getElementById.bind(document)
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
   gltfLoader.setDRACOLoader(dracoLoader)
 
+   function setShadows(modelOrModels: Object3D | Object3D[]): void {
+    if (Array.isArray(modelOrModels.children))
+      for (const child of modelOrModels.children) setShadows(child)
+  }
+
+  // function setShadows(modelOrModels: Object3D | Object3D[]): void {
+  //   if (Array.isArray(modelOrModels)) {
+  //     for (const model of modelOrModels) {
+  //       if (Array.isArray(model.children))
+  //         console.log('model.children:', model.children)
+
+  //       model.castShadow = true
+  //       model.receiveShadow = true
+  //     }
+  //     return
+  //   }
+
+  //   modelOrModels.castShadow = true
+  //   modelOrModels.receiveShadow = true
+  // }
+
   gltfLoader.load(
     '/models/room.glb',
-    gltf => scene.add(gltf.scene),
+    gltf => {
+      for (const child of gltf.scene.children)
+        setShadows(child instanceof THREE.Group ? child.children : child)
+      scene.add(gltf.scene)
+    },
     void 0,
     console.error
   )
@@ -60,13 +89,17 @@ const queryId = document.getElementById.bind(document)
     sphereSize = 1,
     pointLightHelper = new THREE.PointLightHelper(light, sphereSize)
   light.castShadow = true
+  light.position.set(0, 3, 0)
   scene.add(light)
   scene.add(pointLightHelper)
 
-  light.position.set(0, 3, 0)
+  light.shadow.mapSize.width = 512 // default
+  light.shadow.mapSize.height = 512 // default
+  light.shadow.camera.near = 0.5 // default
+  light.shadow.camera.far = 500 // default
 
-  // const atmosphere = new THREE.AmbientLight(0x404040, 1)
-  // scene.add(atmosphere)
+  const atmosphere = new THREE.AmbientLight(0x404040, 0.5)
+  scene.add(atmosphere)
 
   function animate() {
     requestAnimationFrame(animate)

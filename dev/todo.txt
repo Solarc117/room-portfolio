@@ -11,7 +11,11 @@ Major Tasks:
     - camera.ts 
     - sizes.ts
     - room.ts (file that imports blender file & adds it)
-  🎯 add
+  🎯 add shadows:
+    - see how Andrew Woan adds shadows in video
+
+  play laptop/desk animation
+    - 
 
 
 1. Render out blender scene (add lighting, if not imported from blender)
