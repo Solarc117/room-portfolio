@@ -20,7 +20,7 @@ const queryId = document.getElementById.bind(document)
   camera.position.x = 5
 
   renderer.setSize(width, height)
-  renderer.setClearColor(0xfae5b1, 1)
+  renderer.setClearColor(0x212121, 1)
   document.body.appendChild(renderer.domElement)
 
   const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js'),
@@ -35,20 +35,38 @@ const queryId = document.getElementById.bind(document)
       controls = new OrbitControls(camera, renderer.domElement)
 
     controls.update()
+
+    // Helpers.
+    const axesHelper = new THREE.AxesHelper(5)
+    scene.add(axesHelper)
+
+    const size = 10,
+      divisions = 10,
+      gridHelper = new THREE.GridHelper(size, divisions)
+    scene.add(gridHelper)
   }
 
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
   gltfLoader.setDRACOLoader(dracoLoader)
 
   gltfLoader.load(
-    '/models/final.glb',
+    '/models/room.glb',
     gltf => scene.add(gltf.scene),
     void 0,
     console.error
   )
 
-  const atmosphere = new THREE.AmbientLight(0x404040, 10)
-  scene.add(atmosphere)
+  const light = new THREE.PointLight(0x404040, 10),
+    sphereSize = 1,
+    pointLightHelper = new THREE.PointLightHelper(light, sphereSize)
+  light.castShadow = true
+  scene.add(light)
+  scene.add(pointLightHelper)
+
+  light.position.set(0, 3, 0)
+
+  // const atmosphere = new THREE.AmbientLight(0x404040, 1)
+  // scene.add(atmosphere)
 
   function animate() {
     requestAnimationFrame(animate)
