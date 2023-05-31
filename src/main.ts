@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import WebGL from 'three/addons/capabilities/WebGL.js'
 import './style.css'
-import { Light, Object3D } from 'three'
+import { Mesh, Object3D } from 'three'
 const queryId = document.getElementById.bind(document)
 
 ;(async () => {
@@ -35,8 +35,8 @@ const queryId = document.getElementById.bind(document)
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
   gltfLoader.setDRACOLoader(dracoLoader)
 
-  const dayLight = new THREE.DirectionalLight(0xffffff, 1), //0xfff8cc
-    nightLight = new THREE.PointLight(0x7b94ba, 1)
+  const dayLight = new THREE.DirectionalLight(0xffffff, 1),
+    nightLight = new THREE.PointLight(0xfff0a6, 0.5)
 
   if (import.meta.env.MODE === 'development') {
     const { OrbitControls } = await import(
@@ -78,8 +78,8 @@ const queryId = document.getElementById.bind(document)
   gltfLoader.load(
     '/models/room.glb',
     gltf => {
-      let bulb: Object3D
-      function setShadows(model: Object3D): void {
+      let bulb: Mesh | Object3D
+      function setShadows(model: Mesh | Object3D): void {
         model.castShadow = true
         model.receiveShadow = true
 
@@ -115,19 +115,31 @@ const queryId = document.getElementById.bind(document)
       const raycaster = new THREE.Raycaster(),
         pointer = new THREE.Vector2()
 
-      function onPointerMove({ clientX, clientY }: PointerEvent): void {
+      function calculateIntersects({ clientX, clientY }: PointerEvent): void {
         pointer.x = (clientX / window.innerWidth) * 2 - 1
         pointer.y = -(clientY / window.innerHeight) * 2 + 1
-      }
 
-      function render(): void {
         raycaster.setFromCamera(pointer, camera)
         const intersects = raycaster.intersectObjects(scene.children)
-        for (const intersect of intersects)
-          intersect.object.renderer // } //   intersects[i].object.material.color.set(0xff0000) // for (let i = 0; i < intersects.length; i++) {
-            .render(scene, camera)
+        for (const { object } of intersects) {
+          console.log('object.name:', object.name)
+          switch (object.name) {
+            case 'Title':
+              object.material.color.setHex(0xffffff)
+              console.log('Title hover')
+              break
+            case 'Projects':
+              object.material.color.setHex(0xffffff)
+              console.log('Projects')
+              break
+            case 'Interests':
+              object.material.color.setHex(0xffffff)
+              console.log('object.material:', object.material)
+              break
+          }
+        }
       }
-      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointermove', calculateIntersects)
 
       function animate() {
         requestAnimationFrame(animate)
