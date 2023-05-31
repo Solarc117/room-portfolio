@@ -4,16 +4,7 @@ PROJECT DEADLINE: May 31st, 23:00
 
 Major Tasks:
 
-0. Organize file structure:
-  ✅ list out the different files needed:
-    - experience.ts (singleton file - global access point)
-    - scene.ts (scene instantiator)
-    - camera.ts 
-    - sizes.ts
-    - room.ts (file that imports blender file & adds it)
-  🎯 add shadows:
-    - see how Andrew Woan adds shadows in video
-
+  ✅ add shadows:
   play laptop/desk animation
     - 
 

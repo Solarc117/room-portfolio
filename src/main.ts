@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import WebGL from 'three/addons/capabilities/WebGL.js'
 import './style.css'
-import { Object3D } from 'three'
+import { Light, Object3D } from 'three'
 const queryId = document.getElementById.bind(document)
 
 ;(async () => {
@@ -32,6 +32,12 @@ const queryId = document.getElementById.bind(document)
     gltfLoader = new GLTFLoader(),
     dracoLoader = new DRACOLoader()
 
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
+  gltfLoader.setDRACOLoader(dracoLoader)
+
+  const dayLight = new THREE.DirectionalLight(0xffffff, 1), //0xfff8cc
+    nightLight = new THREE.PointLight(0x7b94ba, 1)
+
   if (import.meta.env.MODE === 'development') {
     const { OrbitControls } = await import(
         'three/addons/controls/OrbitControls.js'
@@ -48,63 +54,101 @@ const queryId = document.getElementById.bind(document)
       divisions = 10,
       gridHelper = new THREE.GridHelper(size, divisions)
     scene.add(gridHelper)
+
+    const helper = new THREE.PointLightHelper(nightLight, 0.3)
+    scene.add(helper)
   }
 
-  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
-  gltfLoader.setDRACOLoader(dracoLoader)
+  dayLight.castShadow = true
+  dayLight.position.set(5, 5, 2)
+  dayLight.shadow.mapSize.set(2048, 2048)
+  dayLight.shadow.normalBias = 0.05
 
-   function setShadows(modelOrModels: Object3D | Object3D[]): void {
-    if (Array.isArray(modelOrModels.children))
-      for (const child of modelOrModels.children) setShadows(child)
-  }
+  nightLight.castShadow = true
+  nightLight.position.set(-1.7, 1.4, -1)
+  nightLight.shadow.mapSize.set(2048, 2048)
+  nightLight.shadow.normalBias = 0.05
 
-  // function setShadows(modelOrModels: Object3D | Object3D[]): void {
-  //   if (Array.isArray(modelOrModels)) {
-  //     for (const model of modelOrModels) {
-  //       if (Array.isArray(model.children))
-  //         console.log('model.children:', model.children)
+  scene.add(nightLight)
+  // scene.add(dayLight)
 
-  //       model.castShadow = true
-  //       model.receiveShadow = true
-  //     }
-  //     return
-  //   }
-
-  //   modelOrModels.castShadow = true
-  //   modelOrModels.receiveShadow = true
-  // }
+  const atmosphere = new THREE.AmbientLight(0x404040, 0.5)
+  scene.add(atmosphere)
 
   gltfLoader.load(
     '/models/room.glb',
     gltf => {
-      for (const child of gltf.scene.children)
-        setShadows(child instanceof THREE.Group ? child.children : child)
+      let bulb: Object3D
+      function setShadows(model: Object3D): void {
+        model.castShadow = true
+        model.receiveShadow = true
+
+        if (!bulb && model.name === 'Sphere') bulb = model
+
+        if (model.children.length > 0)
+          for (const child of model.children) setShadows(child)
+      }
+      for (const child of gltf.scene.children) setShadows(child)
       scene.add(gltf.scene)
+
+      // Animation.
+      const mixer = new THREE.AnimationMixer(gltf.scene),
+        animations = gltf.animations.filter(
+          animation => animation.duration > 1
+        ),
+        tableClip = THREE.AnimationClip.findByName(
+          animations,
+          'CubeAction.004'
+        ),
+        laptopClip = THREE.AnimationClip.findByName(
+          animations,
+          'Cube.186Action'
+        ),
+        tableAction = mixer.clipAction(tableClip),
+        laptopAction = mixer.clipAction(laptopClip)
+
+      laptopAction.timeScale = 0.0005
+      tableAction.timeScale = 0.0005
+      tableAction.play()
+      laptopAction.play()
+
+      const raycaster = new THREE.Raycaster(),
+        pointer = new THREE.Vector2()
+
+      function onPointerMove({ clientX, clientY }: PointerEvent): void {
+        pointer.x = (clientX / window.innerWidth) * 2 - 1
+        pointer.y = -(clientY / window.innerHeight) * 2 + 1
+      }
+
+      function render(): void {
+        raycaster.setFromCamera(pointer, camera)
+        const intersects = raycaster.intersectObjects(scene.children)
+        for (const intersect of intersects)
+          intersect.object.renderer // } //   intersects[i].object.material.color.set(0xff0000) // for (let i = 0; i < intersects.length; i++) {
+            .render(scene, camera)
+      }
+      window.addEventListener('pointermove', onPointerMove)
+
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const bulbVector = new THREE.Vector3()
+        bulb.getWorldPosition(bulbVector)
+        nightLight.position.lerp(bulbVector, 0.1)
+        mixer.update(16)
+        renderer.render(scene, camera)
+      }
+      animate()
     },
     void 0,
     console.error
   )
 
-  const light = new THREE.PointLight(0x404040, 10),
-    sphereSize = 1,
-    pointLightHelper = new THREE.PointLightHelper(light, sphereSize)
-  light.castShadow = true
-  light.position.set(0, 3, 0)
-  scene.add(light)
-  scene.add(pointLightHelper)
-
-  light.shadow.mapSize.width = 512 // default
-  light.shadow.mapSize.height = 512 // default
-  light.shadow.camera.near = 0.5 // default
-  light.shadow.camera.far = 500 // default
-
-  const atmosphere = new THREE.AmbientLight(0x404040, 0.5)
-  scene.add(atmosphere)
-
-  function animate() {
-    requestAnimationFrame(animate)
-
-    renderer.render(scene, camera)
-  }
-  animate()
+  // const { CSS3DRenderer } = await import(
+  //     'three/addons/renderers/CSS3DRenderer.js'
+  //   ),
+  //   textRenderer = new CSS3DRenderer({
+  //     element: queryId('container') || void 0,
+  //   })
+  // textRenderer.setSize(width, height)
 })()
