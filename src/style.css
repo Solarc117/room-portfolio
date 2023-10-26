@@ -19,14 +19,11 @@ body {
 }
 
 .experience {
-  /* Where */
   position: absolute;
   top: 0;
   left: 0;
-  /* What */
   width: 100%;
   height: 100%;
-  /* Within */
 }
 
 canvas {
